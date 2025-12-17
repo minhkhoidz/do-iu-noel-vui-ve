@@ -36,7 +36,7 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
+        <div id="status" class="badge">🎄 DỢ IU NOEL VUI VẺ 🎄</div>
         <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>Pinch:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
@@ -260,7 +260,7 @@
                         state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄 DỢ IU NOEL VUI VẺ🎄"; statusDiv.style.color = "#FFF";
                 }
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
