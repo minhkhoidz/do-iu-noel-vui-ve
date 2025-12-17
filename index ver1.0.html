@@ -36,8 +36,8 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 DỢ IU NOEL VUI VẺ 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>aukayy:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>Pinch:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -77,8 +77,8 @@
         const CONFIG = { goldCount: 8000, redCount: 1200, giftCount: 200, explodeRadius: 85, photoOrbitRadius: 40, treeHeight: 70, treeBaseRadius: 35 };
 
         let scene, camera, renderer, groupGold, groupRed, groupGift, photoMeshes = [];
-        let titleMesh, starMesh, flashMesh; // Thêm flashMesh
-        let state = 'TREE', lastState = 'TREE'; // Thêm lastState để theo dõi chuyển đổi
+        let titleMesh, starMesh, flashMesh; 
+        let state = 'TREE', lastState = 'TREE'; 
         let selectedIndex = 0, handX = 0.5, handY = 0.5;
 
         function init3D() {
@@ -96,22 +96,25 @@
             groupGift = createParticleSystem('gift', CONFIG.giftCount, 2.5);
 
             createPhotos(); createDecorations(); 
-            createFlashEffect(); // Tạo hiệu ứng lóe sáng
+            createFlashEffect(); 
             animate();
         }
 
-        // --- TẠO MÀN HÌNH LÓE SÁNG VÀNG ---
+        // --- SỬA ĐỔI: Tạo đốm sáng nhỏ thay vì màn hình lớn ---
         function createFlashEffect() {
-            const geometry = new THREE.PlaneGeometry(10, 10);
+            // Kích thước nhỏ (15x15) đủ bao quanh khung ảnh
+            const geometry = new THREE.PlaneGeometry(15, 15); 
             const material = new THREE.MeshBasicMaterial({
-                color: 0xFFD700, // Màu vàng kim
+                color: 0xFFD700, 
                 transparent: true,
-                opacity: 0, // Ban đầu ẩn đi
+                opacity: 0, 
+                // Dùng AdditiveBlending để tạo hiệu ứng phát sáng đẹp hơn
+                blending: THREE.AdditiveBlending, 
                 depthTest: false,
                 depthWrite: false
             });
             flashMesh = new THREE.Mesh(geometry, material);
-            flashMesh.position.z = 90; // Đặt gần camera
+            // Không cần đặt vị trí Z cố định nữa
             scene.add(flashMesh);
         }
 
@@ -164,17 +167,24 @@
             const hRotY = (handX - 0.5) * Math.PI * 2;
             const hRotX = (handY - 0.5) * Math.PI * 2;
 
-            // --- XỬ LÝ HIỆU ỨNG FLASH ---
-            // Nếu vừa chuyển sang trạng thái PHOTO
+            // --- SỬA ĐỔI: Xử lý hiệu ứng flash điểm ---
             if (state === 'PHOTO' && lastState !== 'PHOTO') {
-                flashMesh.material.opacity = 1.0; // Kích hoạt flash
+                // Lấy vị trí của ảnh đang chọn
+                const targetPhoto = photoMeshes[selectedIndex];
+                // Đặt đốm sáng ngay tại vị trí đó
+                flashMesh.position.copy(targetPhoto.position);
+                // Dịch lên trước một chút để không bị ảnh che
+                flashMesh.position.z += 2; 
+                flashMesh.scale.set(1,1,1); // Reset kích thước
+                flashMesh.material.opacity = 0.7; // Bắt đầu sáng nhẹ (0.7)
             }
-            // Mờ dần hiệu ứng flash
+            
             if (flashMesh.material.opacity > 0) {
-                flashMesh.material.opacity -= 0.05;
+                flashMesh.material.opacity -= 0.04; // Mờ dần
+                flashMesh.scale.multiplyScalar(1.03); // Phóng to nhẹ khi mờ
             }
-            lastState = state; // Cập nhật trạng thái cũ
-            // ---------------------------
+            lastState = state;
+            // ----------------------------------------
 
             [groupGold, groupRed, groupGift].forEach(g => {
                 const p = g.geometry.attributes.position.array;
@@ -200,7 +210,7 @@
             } else if (state === 'PHOTO') {
                 photoMeshes.forEach((m, i) => {
                     if (i === selectedIndex) { 
-                        // --- THAY ĐỔI: Giảm tốc độ lerp xuống 0.035 cho hiệu ứng chậm lại ---
+                        // Hiệu ứng zoom chậm
                         m.position.lerp(new THREE.Vector3(0,0,60), 0.035); 
                         m.scale.lerp(new THREE.Vector3(6,6,6), 0.035); 
                         m.lookAt(camera.position); 
@@ -247,10 +257,10 @@
                     } else if (pinchDist < 0.06) {
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
-                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay"; statusDiv.style.color = "#FFA500";
+                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; statusDiv.innerText = "🎄 DỢ IU NOEL VUI VẺ 🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
                 }
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
