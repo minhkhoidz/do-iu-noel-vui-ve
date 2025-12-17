@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Magic - Gestures Restored</title>
+    <title>Christmas Magic - Sensitivity Adjusted</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -27,7 +27,6 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        /* Camera giữ nguyên style khung đen của bạn */
         #camera-preview { 
             position: absolute; top: 15px; right: 15px; width: 120px; height: 90px; 
             border: 2px solid rgba(255,0,0,0.5); transform: scaleX(-1); 
@@ -200,7 +199,6 @@
                     const lm = results.multiHandLandmarks[0];
                     handX = lm[9].x; handY = lm[9].y;
                     
-                    // KHÔI PHỤC THUẬT TOÁN CỬ CHỈ GỐC CỦA BẠN
                     const tips = [8,12,16,20];
                     const wrist = lm[0];
                     let openDist = 0;
@@ -208,9 +206,10 @@
                     const avgDist = openDist / 4;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    if (avgDist < 0.25) { 
+                    // --- SỬA ĐỘ NHẠY Ở ĐÂY ---
+                    if (avgDist < 0.20) {  // Giảm từ 0.25 -> 0.20 (Cần nắm chặt hơn)
                         state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
-                    } else if (pinchDist < 0.05) {
+                    } else if (pinchDist < 0.035) { // Giảm từ 0.05 -> 0.035 (Cần chạm ngón sát hơn)
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
                         state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
