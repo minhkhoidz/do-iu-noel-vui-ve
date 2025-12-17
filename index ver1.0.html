@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Gifts & Lights - Ultra Edition</title>
+    <title>Christmas Lights & Polaroid Frames</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -15,24 +15,24 @@
         #canvas-container { width: 100%; height: 100vh; display: block; }
         #ui-layer { position: absolute; bottom: 30px; width: 100%; text-align: center; pointer-events: none; z-index: 100; }
         .badge {
-            display: inline-block; background: rgba(0,0,0,0.7); border: 2px solid #FFD700; color: #FFD700;
+            display: inline-block; background: rgba(0,0,0,0.7); border: 2px solid #FFF; color: #FFF;
             padding: 10px 25px; border-radius: 50px; font-size: 18px; font-weight: bold; margin-bottom: 10px;
-            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); text-shadow: 0 0 10px #FFD700;
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); text-shadow: 0 0 10px #FFF;
         }
         .guide { color: #ccc; font-size: 13px; margin-bottom: 20px; text-shadow: 0 2px 4px black;}
         button {
             pointer-events: auto; cursor: pointer; background: linear-gradient(to bottom, #D32F2F, #8B0000); 
-            color: #FFF; border: 2px solid #FFD700; padding: 15px 50px; border-radius: 30px; 
+            color: #FFF; border: 2px solid #FFF; padding: 15px 50px; border-radius: 30px; 
             font-weight: 800; font-size: 16px; box-shadow: 0 0 30px rgba(255, 0, 0, 0.6); animation: pulse 1.5s infinite;
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        #camera-preview { position: absolute; top: 15px; right: 15px; width: 120px; height: 90px; border: 2px solid rgba(255,215,0,0.5); transform: scaleX(-1); opacity: 0.6; border-radius: 8px; }
+        #camera-preview { position: absolute; top: 15px; right: 15px; width: 120px; height: 90px; border: 2px solid rgba(255,255,255,0.5); transform: scaleX(-1); opacity: 0.6; border-radius: 8px; }
     </style>
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung & Xoay 360° | 👌 <b>Pinch:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 Christmas Magic 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay 360° | 👌 <b>Pinch:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -83,14 +83,14 @@
         };
 
         // ==========================================
-        // 2. Vandiep - Cấu hình mật độ cao (High Density)
+        // 2. Vandiep - Cấu hình mật độ cao
         // ==========================================
         const CONFIG = {
-            goldCount: 8000,    // Rất nhiều đốm sáng vàng
-            redCount: 1200,     // Nhiều đèn đỏ lấp lánh
+            goldCount: 8000,    
+            redCount: 1200,     
             giftCount: 200,     
-            explodeRadius: 75,  
-            photoOrbitRadius: 30,
+            explodeRadius: 80,  
+            photoOrbitRadius: 35,
             treeHeight: 70,
             treeBaseRadius: 35
         };
@@ -102,7 +102,7 @@
         
         let state = 'TREE'; 
         let selectedIndex = 0;
-        let handX = 0.5, handY = 0.5; // Thêm handY để xoay lên xuống
+        let handX = 0.5, handY = 0.5;
 
         // ==========================================
         // 3. Vandiep
@@ -171,12 +171,19 @@
         }
 
         function createPhotos() {
-            const geo = new THREE.PlaneGeometry(8, 8);
-            const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); 
+            // Vandiep: Làm ảnh nhỏ lại (kích thước 5x5 thay vì 8x8)
+            const photoGeo = new THREE.PlaneGeometry(5, 5);
+            // Tạo khung ảnh kiểu Polaroid (màu trắng, lề dưới rộng hơn)
+            const frameGeo = new THREE.PlaneGeometry(5.8, 7.2); 
+            const frameMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+
             for(let i=0; i<5; i++) {
-                const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: photoTextures[i], side: THREE.DoubleSide }));
-                const border = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 8.5), borderMat);
-                border.position.z = -0.05; mesh.add(border);
+                const mesh = new THREE.Mesh(photoGeo, new THREE.MeshBasicMaterial({ map: photoTextures[i], side: THREE.DoubleSide }));
+                const frame = new THREE.Mesh(frameGeo, frameMat);
+                frame.position.z = -0.05; 
+                frame.position.y = -0.6; // Tạo lề dưới rộng đặc trưng của khung Polaroid
+                mesh.add(frame);
+                
                 mesh.visible = false; mesh.scale.set(0,0,0);
                 scene.add(mesh); photoMeshes.push(mesh);
             }
@@ -202,23 +209,18 @@
             starMesh.position.set(0, CONFIG.treeHeight/2 + 2, 0); scene.add(starMesh);
         }
 
-        // Cập nhật hệ thống xoay 360 độ theo cả 2 trục
         function updateParticleGroup(group, targetState, speed, handRotX, handRotY, time, isBlinking) {
             const positions = group.geometry.attributes.position.array;
             const targets = group.geometry.userData[targetState === 'TREE' ? 'tree' : 'explode'];
-
             for(let i=0; i<positions.length; i++) {
                 positions[i] += (targets[i] - positions[i]) * speed;
             }
             group.geometry.attributes.position.needsUpdate = true;
-            
             if (targetState === 'TREE') {
-                group.rotation.y += 0.003; group.rotation.x *= 0.9; // Trả về trục thẳng khi ở dạng cây
-                if(isBlinking) {
-                    const s = 1 + Math.sin(time * 5) * 0.15; group.scale.set(s,s,s);
-                } else { group.scale.set(1,1,1); }
+                group.rotation.y += 0.003; group.rotation.x *= 0.9;
+                if(isBlinking) { const s = 1 + Math.sin(time * 5) * 0.15; group.scale.set(s,s,s); }
+                else { group.scale.set(1,1,1); }
             } else {
-                // Xoay 360 độ linh hoạt theo tay (Lên/Xuống/Trái/Phải)
                 group.rotation.y += (handRotY - group.rotation.y) * 0.05;
                 group.rotation.x += (handRotX - group.rotation.x) * 0.05;
             }
@@ -228,7 +230,6 @@
             requestAnimationFrame(animate);
             const time = Date.now() * 0.001;
             const speed = 0.06;
-            // Ánh xạ tọa độ tay sang góc xoay (PI * 2 = 360 độ)
             const handRotY = (handX - 0.5) * Math.PI * 2;
             const handRotX = (handY - 0.5) * Math.PI * 2;
 
@@ -250,7 +251,6 @@
                     const angle = groupGold.rotation.y + i * angleStep;
                     const x = Math.sin(angle) * CONFIG.photoOrbitRadius;
                     const z = Math.cos(angle) * CONFIG.photoOrbitRadius;
-                    // Ảnh xoay theo cả trục X của nhóm đốm sáng
                     mesh.position.set(x, Math.sin(time + i) * 5 + (handRotX * 10), z);
                     mesh.lookAt(camera.position);
 
@@ -261,15 +261,15 @@
                         const ds = 1.0 + (currentZ / CONFIG.photoOrbitRadius) * 0.8; 
                         mesh.scale.lerp(new THREE.Vector3(ds, ds, ds), 0.1);
                     } else {
-                        // Vandiep: Ảnh thu nhỏ cực nhỏ (0.1) để ẩn mình trong đốm sáng
-                        mesh.scale.lerp(new THREE.Vector3(0.1, 0.1, 0.1), 0.1); 
+                        // Vandiep: Làm khung ảnh nhỏ xíu lẩn trong đốm sáng
+                        mesh.scale.lerp(new THREE.Vector3(0.08, 0.08, 0.08), 0.1); 
                     }
                 });
             } else if (state === 'PHOTO') {
                 photoMeshes.forEach((m, i) => {
                     if (i === selectedIndex) {
                         m.position.lerp(new THREE.Vector3(0, 0, 60), 0.1);
-                        m.scale.lerp(new THREE.Vector3(5, 5, 5), 0.1);
+                        m.scale.lerp(new THREE.Vector3(6, 6, 6), 0.1);
                         m.lookAt(camera.position);
                     } else { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); }
                 });
@@ -282,36 +282,24 @@
             bgMusic.play().catch(e => console.log(e));
             init3D();
             const video = document.getElementsByClassName('input_video')[0];
-            const canvas = document.getElementById('camera-preview');
-            const ctx = canvas.getContext('2d');
             const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
             hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-
             hands.onResults(results => {
-                ctx.clearRect(0,0,100,75); ctx.drawImage(results.image, 0, 0, 100, 75);
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
-                    handX = lm[9].x; handY = lm[9].y; // Lấy cả X và Y từ cổ tay/lòng bàn tay
-
+                    handX = lm[9].x; handY = lm[9].y;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
                     const openDist = (Math.hypot(lm[8].x-lm[0].x, lm[8].y-lm[0].y) + Math.hypot(lm[12].x-lm[0].x, lm[12].y-lm[0].y)) / 2;
-
                     if (openDist < 0.2) { state = 'TREE'; } 
                     else if (pinchDist < 0.05) { state = 'PHOTO'; } 
                     else { state = 'EXPLODE'; }
-                    document.getElementById('status').innerText = state === 'TREE' ? "✊ Thu Cây" : (state === 'PHOTO' ? "👌 Xem Ảnh" : "🖐 Bung & Xoay 360°");
+                    document.getElementById('status').innerText = state === 'TREE' ? "✊ Thu Cây" : (state === 'PHOTO' ? "👌 Xem Ảnh" : "🖐 Xoay 360°");
                 }
             });
-
-            const cameraUtils = new Camera(video, {
-                onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240
-            });
+            const cameraUtils = new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 });
             cameraUtils.start();
         }
-
-        window.addEventListener('resize', () => {
-            if(camera) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
-        });
+        window.addEventListener('resize', () => { if(camera) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } });
     </script>
 </body>
 </html>
