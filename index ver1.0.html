@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Lights & Polaroid Frames</title>
+    <title>Christmas Magic - 9 Photos Edition</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -31,8 +31,8 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 Christmas Magic 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay 360° | 👌 <b>Pinch:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 9 Kỷ Niệm Giáng Sinh 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung 9 Ảnh & Xoay | 👌 <b>Pinch:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -41,14 +41,19 @@
 
     <script>
         // ==========================================
-        // 1. Vandiep
+        // 1. Vandiep - Danh sách 9 ảnh
         // ==========================================
         const MUSIC_URL = "./audio.mp3";
         let bgMusic = new Audio(MUSIC_URL);
         bgMusic.loop = true; bgMusic.volume = 1.0;
 
         const loader = new THREE.TextureLoader();
-        const photoFiles = ['./image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg'];
+        // Cập nhật lên 9 tấm ảnh
+        const photoFiles = [
+            './image1.jpeg', './image2.jpeg', './image3.jpeg', 
+            './image4.jpeg', './image5.jpeg', './image6.jpeg',
+            './image7.jpeg', './image8.jpeg', './image9.jpeg'
+        ];
         const photoTextures = [];
         photoFiles.forEach((f, i) => photoTextures[i] = loader.load(f));
 
@@ -89,8 +94,8 @@
             goldCount: 8000,    
             redCount: 1200,     
             giftCount: 200,     
-            explodeRadius: 80,  
-            photoOrbitRadius: 35,
+            explodeRadius: 85,    // Tăng nhẹ bán kính để 9 ảnh không bị chật
+            photoOrbitRadius: 40, // Tăng nhẹ để vòng quay 9 ảnh đẹp hơn
             treeHeight: 70,
             treeBaseRadius: 35
         };
@@ -158,30 +163,27 @@
             const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.Float32BufferAttribute(pPositions, 3));
             geo.userData = { tree: pTreeTargets, explode: pExplodeTargets };
-
             const mat = new THREE.PointsMaterial({
                 size: size, map: textures[type], transparent: true, opacity: 1.0,
                 blending: (type === 'gift') ? THREE.NormalBlending : THREE.AdditiveBlending, 
                 depthWrite: false, sizeAttenuation: true
             });
-
             const points = new THREE.Points(geo, mat);
             scene.add(points);
             return points;
         }
 
         function createPhotos() {
-            // Vandiep: Làm ảnh nhỏ lại (kích thước 5x5 thay vì 8x8)
             const photoGeo = new THREE.PlaneGeometry(5, 5);
-            // Tạo khung ảnh kiểu Polaroid (màu trắng, lề dưới rộng hơn)
             const frameGeo = new THREE.PlaneGeometry(5.8, 7.2); 
             const frameMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
 
-            for(let i=0; i<5; i++) {
+            // Tự động tạo khung cho toàn bộ ảnh trong mảng photoTextures (9 ảnh)
+            for(let i=0; i < photoTextures.length; i++) {
                 const mesh = new THREE.Mesh(photoGeo, new THREE.MeshBasicMaterial({ map: photoTextures[i], side: THREE.DoubleSide }));
                 const frame = new THREE.Mesh(frameGeo, frameMat);
                 frame.position.z = -0.05; 
-                frame.position.y = -0.6; // Tạo lề dưới rộng đặc trưng của khung Polaroid
+                frame.position.y = -0.6; // Lề dưới Polaroid
                 mesh.add(frame);
                 
                 mesh.visible = false; mesh.scale.set(0,0,0);
@@ -243,7 +245,8 @@
                 photoMeshes.forEach(m => { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); m.visible = false; });
             } else if (state === 'EXPLODE') {
                 titleMesh.visible = false; starMesh.visible = false;
-                const angleStep = (Math.PI * 2) / 5;
+                // Tính toán góc chia đều cho 9 tấm ảnh
+                const angleStep = (Math.PI * 2) / photoMeshes.length;
                 let maxZ = -999;
 
                 photoMeshes.forEach((mesh, i) => {
@@ -261,8 +264,8 @@
                         const ds = 1.0 + (currentZ / CONFIG.photoOrbitRadius) * 0.8; 
                         mesh.scale.lerp(new THREE.Vector3(ds, ds, ds), 0.1);
                     } else {
-                        // Vandiep: Làm khung ảnh nhỏ xíu lẩn trong đốm sáng
-                        mesh.scale.lerp(new THREE.Vector3(0.08, 0.08, 0.08), 0.1); 
+                        // Ảnh cực nhỏ ẩn trong 8000 đốm sáng
+                        mesh.scale.lerp(new THREE.Vector3(0.07, 0.07, 0.07), 0.1); 
                     }
                 });
             } else if (state === 'PHOTO') {
