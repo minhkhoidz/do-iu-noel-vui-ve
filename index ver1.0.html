@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Magic - Sensitivity Adjusted</title>
+    <title>Christmas Magic - Final Master Edition</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -36,8 +36,8 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 NOEL CỤA A DÀNH CHO E 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung  | 👌 <b>aukayy:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Ảnh nhỏ ẩn hiện | 👌 <b>Pinch:</b> Xem ảnh Phóng to | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -129,7 +129,7 @@
         function createDecorations() {
             const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d'); ctx.font = 'bold italic 90px serif'; ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
-            ctx.fillText("DỢ IU NOEL DUI DẺ", 512, 130);
+            ctx.fillText("MERRY CHRISTMAS", 512, 130);
             const title = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, blending: THREE.AdditiveBlending }));
             title.position.y = 50; scene.add(title);
 
@@ -163,12 +163,18 @@
                     m.position.set(Math.sin(a)*CONFIG.photoOrbitRadius, Math.sin(time+i)*5 + (hRotX*10), Math.cos(a)*CONFIG.photoOrbitRadius);
                     m.lookAt(camera.position);
                     if (m.position.z > maxZ) { maxZ = m.position.z; selectedIndex = i; }
-                    let s = m.position.z > 5 ? 1.0 + (m.position.z/40)*0.8 : 0.07;
-                    m.scale.lerp(new THREE.Vector3(s,s,s), 0.1);
+                    
+                    // --- THAY ĐỔI THEO YÊU CẦU: Ảnh giữ nguyên độ nhỏ khi bung tay ---
+                    m.scale.lerp(new THREE.Vector3(0.08, 0.08, 0.08), 0.1); 
                 });
             } else if (state === 'PHOTO') {
                 photoMeshes.forEach((m, i) => {
-                    if (i === selectedIndex) { m.position.lerp(new THREE.Vector3(0,0,60), 0.1); m.scale.lerp(new THREE.Vector3(6,6,6), 0.1); m.lookAt(camera.position); }
+                    if (i === selectedIndex) { 
+                        // --- THAY ĐỔI THEO YÊU CẦU: Phóng to từ nhỏ lên lớn ---
+                        m.position.lerp(new THREE.Vector3(0,0,60), 0.1); 
+                        m.scale.lerp(new THREE.Vector3(6,6,6), 0.1); 
+                        m.lookAt(camera.position); 
+                    }
                     else { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); }
                 });
             } else {
@@ -206,16 +212,15 @@
                     const avgDist = openDist / 4;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    // --- SỬA ĐỘ NHẠY Ở ĐÂY ---
-                    if (avgDist < 0.20) {  // Giảm từ 0.25 -> 0.20 (Cần nắm chặt hơn)
-                        state = 'TREE'; statusDiv.innerText = "✊  Cây Thông"; statusDiv.style.color = "#FFD700";
-                    } else if (pinchDist < 0.035) { // Giảm từ 0.05 -> 0.035 (Cần chạm ngón sát hơn)
+                    if (avgDist < 0.20) { 
+                        state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
+                    } else if (pinchDist < 0.035) {
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
-                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung "; statusDiv.style.color = "#FFA500";
+                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; statusDiv.innerText = "🎄NOEL CỤA A DÀNH CHO E 🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
                 }
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
