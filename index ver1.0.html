@@ -37,7 +37,7 @@
 <body>
     <div id="ui-layer">
         <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Ảnh nhỏ ẩn hiện | 👌 <b>Pinch:</b> Xem ảnh Phóng to | ✊ <b>Nắm:</b> Thu cây</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>Pinch:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -164,13 +164,12 @@
                     m.lookAt(camera.position);
                     if (m.position.z > maxZ) { maxZ = m.position.z; selectedIndex = i; }
                     
-                    // --- THAY ĐỔI THEO YÊU CẦU: Ảnh giữ nguyên độ nhỏ khi bung tay ---
-                    m.scale.lerp(new THREE.Vector3(0.08, 0.08, 0.08), 0.1); 
+                    // --- ĐÃ ĐIỀU CHỈNH: Ảnh hơi nhỏ xinh (0.25) chứ không quá nhỏ ---
+                    m.scale.lerp(new THREE.Vector3(0.25, 0.25, 0.25), 0.1); 
                 });
             } else if (state === 'PHOTO') {
                 photoMeshes.forEach((m, i) => {
                     if (i === selectedIndex) { 
-                        // --- THAY ĐỔI THEO YÊU CẦU: Phóng to từ nhỏ lên lớn ---
                         m.position.lerp(new THREE.Vector3(0,0,60), 0.1); 
                         m.scale.lerp(new THREE.Vector3(6,6,6), 0.1); 
                         m.lookAt(camera.position); 
@@ -212,9 +211,10 @@
                     const avgDist = openDist / 4;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    if (avgDist < 0.20) { 
+                    // --- ĐÃ TĂNG ĐỘ NHẠY: Dễ nhận diện hơn một chút ---
+                    if (avgDist < 0.23) {  // Tăng từ 0.20 -> 0.23 (Dễ thu cây hơn)
                         state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
-                    } else if (pinchDist < 0.035) {
+                    } else if (pinchDist < 0.045) { // Tăng từ 0.035 -> 0.045 (Dễ xem ảnh hơn)
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
                         state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
@@ -225,7 +225,7 @@
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
         }
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        window.addEventListener('resize', () => { if(camera) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } });
     </script>
 </body>
 </html>
