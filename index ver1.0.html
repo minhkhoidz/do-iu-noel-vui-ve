@@ -36,8 +36,8 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung & Xoay 360° | 👌 <b>Pinch:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 NOEL CỤA A DÀNH CHO E 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung  | 👌 <b>aukayy:</b> Xem ảnh | ✊ <b>Nắm:</b> Thu cây</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -129,7 +129,7 @@
         function createDecorations() {
             const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d'); ctx.font = 'bold italic 90px serif'; ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
-            ctx.fillText("MERRY CHRISTMAS", 512, 130);
+            ctx.fillText("DỢ IU NOEL DUI DẺ", 512, 130);
             const title = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, blending: THREE.AdditiveBlending }));
             title.position.y = 50; scene.add(title);
 
@@ -208,14 +208,14 @@
 
                     // --- SỬA ĐỘ NHẠY Ở ĐÂY ---
                     if (avgDist < 0.20) {  // Giảm từ 0.25 -> 0.20 (Cần nắm chặt hơn)
-                        state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
+                        state = 'TREE'; statusDiv.innerText = "✊  Cây Thông"; statusDiv.style.color = "#FFD700";
                     } else if (pinchDist < 0.035) { // Giảm từ 0.05 -> 0.035 (Cần chạm ngón sát hơn)
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
-                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
+                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung "; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄NOEL CỤA A DÀNH CHO E 🎄"; statusDiv.style.color = "#FFF";
                 }
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
