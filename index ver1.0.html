@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Gifts & Lights</title>
+    <title>Christmas Gifts & Lights - Upgraded</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -68,7 +68,7 @@
 
     <script>
         // ==========================================
-        // 1. Vandiep - Tài nguyên & Texture
+        // 1. Vandiep
         // ==========================================
         const MUSIC_URL = "./audio.mp3";
         let bgMusic = new Audio(MUSIC_URL);
@@ -116,12 +116,12 @@
         };
 
         // ==========================================
-        // 2. Vandiep - Cấu hình 3D
+        // 2. Vandiep - Cấu hình nâng cấp
         // ==========================================
         const CONFIG = {
-            goldCount: 2000,
-            redCount: 300,
-            giftCount: 150,
+            goldCount: 4000,    // Đã tăng gấp đôi (Cũ: 2000)
+            redCount: 600,      // Đã tăng gấp đôi (Cũ: 300)
+            giftCount: 150,     
             explodeRadius: 65,  
             photoOrbitRadius: 25,
             treeHeight: 70,
@@ -138,7 +138,7 @@
         let handX = 0.5;
 
         // ==========================================
-        // 3. Vandiep - Khởi tạo & Hiệu ứng
+        // 3. Vandiep
         // ==========================================
         function init3D() {
             const container = document.getElementById('canvas-container');
@@ -199,12 +199,9 @@
             geo.userData = { tree: pTreeTargets, explode: pExplodeTargets };
 
             const mat = new THREE.PointsMaterial({
-                size: size,
-                map: textures[type],
-                transparent: true, opacity: 1.0,
+                size: size, map: textures[type], transparent: true, opacity: 1.0,
                 blending: (type === 'gift') ? THREE.NormalBlending : THREE.AdditiveBlending, 
-                depthWrite: false,
-                sizeAttenuation: true
+                depthWrite: false, sizeAttenuation: true
             });
 
             const points = new THREE.Points(geo, mat);
@@ -218,18 +215,13 @@
             const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); 
 
             for(let i=0; i<5; i++) {
-                const mat = new THREE.MeshBasicMaterial({ 
-                    map: photoTextures[i], side: THREE.DoubleSide 
-                });
+                const mat = new THREE.MeshBasicMaterial({ map: photoTextures[i], side: THREE.DoubleSide });
                 const mesh = new THREE.Mesh(geo, mat);
                 const border = new THREE.Mesh(borderGeo, borderMat);
                 border.position.z = -0.1; 
                 mesh.add(border);
-                
-                mesh.visible = false;
-                mesh.scale.set(0,0,0);
-                scene.add(mesh);
-                photoMeshes.push(mesh);
+                mesh.visible = false; mesh.scale.set(0,0,0);
+                scene.add(mesh); photoMeshes.push(mesh);
             }
         }
 
@@ -281,9 +273,7 @@
                 if(isBlinking) {
                     const scale = 1 + Math.sin(time * 5) * 0.2;
                     group.scale.set(scale, scale, scale);
-                } else {
-                    group.scale.set(1,1,1);
-                }
+                } else { group.scale.set(1,1,1); }
             } else {
                 group.scale.set(1,1,1);
                 group.rotation.y += (handRotY - group.rotation.y) * 0.05;
@@ -333,7 +323,8 @@
                         const distScale = 1.0 + (z / CONFIG.photoOrbitRadius) * 0.8; 
                         mesh.scale.lerp(new THREE.Vector3(distScale, distScale, distScale), 0.1);
                     } else {
-                        mesh.scale.lerp(new THREE.Vector3(0.6, 0.6, 0.6), 0.1);
+                        // Vandiep: Ảnh nhỏ đi khi mới bung (0.2 thay vì 0.6)
+                        mesh.scale.lerp(new THREE.Vector3(0.2, 0.2, 0.2), 0.1); 
                     }
                 });
             } else if (state === 'PHOTO') {
@@ -343,38 +334,29 @@
                         mesh.scale.lerp(new THREE.Vector3(5, 5, 5), 0.1);
                         mesh.lookAt(camera.position);
                         mesh.rotation.z = 0;
-                    } else {
-                        mesh.scale.lerp(new THREE.Vector3(0,0,0), 0.1);
-                    }
+                    } else { mesh.scale.lerp(new THREE.Vector3(0,0,0), 0.1); }
                 });
             }
             renderer.render(scene, camera);
         }
 
-        // ==========================================
-        // 4. Vandiep - Điều khiển Camera & Hand Tracking
-        // ==========================================
         function startSystem() {
             document.getElementById('btnStart').style.display = 'none';
             bgMusic.play().catch(e => console.log(e));
             init3D();
-
             const video = document.getElementsByClassName('input_video')[0];
             const canvas = document.getElementById('camera-preview');
             const ctx = canvas.getContext('2d');
             const statusDiv = document.getElementById('status');
             
-            let frameCnt = 0;
             const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
             hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 
             hands.onResults(results => {
                 ctx.clearRect(0,0,100,75); ctx.drawImage(results.image, 0, 0, 100, 75);
-
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
                     handX = lm[9].x; 
-
                     const tips = [8,12,16,20];
                     const wrist = lm[0];
                     let openDist = 0;
@@ -383,26 +365,20 @@
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
                     if (avgDist < 0.25) { 
-                        state = 'TREE'; 
-                        statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
+                        state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
                     } else if (pinchDist < 0.05) {
-                        state = 'PHOTO';
-                        statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
+                        state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
-                        state = 'EXPLODE'; 
-                        statusDiv.innerText = "🖐 Bung Quà & Ảnh"; statusDiv.style.color = "#FFA500";
+                        state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung Quà & Ảnh"; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; 
-                    statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
                 }
             });
 
             const cameraUtils = new Camera(video, {
-                onFrame: async () => {
-                    frameCnt++; if(frameCnt%3 !== 0) return; 
-                    await hands.send({image: video});
-                }, width: 320, height: 240
+                onFrame: async () => { await hands.send({image: video}); }, 
+                width: 320, height: 240
             });
             cameraUtils.start();
         }
