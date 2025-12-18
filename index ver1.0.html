@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Magic - Character Edition</title>
+    <title>Christmas Magic - Colorful Characters</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -53,9 +53,6 @@
         const photoFiles = ['./image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg', './image6.jpeg', './image7.jpeg', './image8.jpeg', './image9.jpeg'];
         const photoTextures = [];
         photoFiles.forEach((f, i) => photoTextures[i] = loader.load(f));
-        
-        // Tải ảnh nhân vật để làm texture
-        const characterTexture = loader.load('image_0.png');
 
         function createCustomTexture(type) {
             const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
@@ -94,7 +91,7 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            // Tạo hệ thống hạt dựa trên hình ảnh
+            // Nhớ đổi tên file ảnh của bạn thành image_0.png nhé!
             createImageBasedParticles('image_0.png');
 
             createPhotos(); createDecorations(); 
@@ -102,14 +99,12 @@
             animate();
         }
 
-        // --- HÀM MỚI: Tạo hạt dựa trên ảnh ---
         function createImageBasedParticles(imageUrl) {
             const img = new Image();
             img.src = imageUrl;
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                canvas.width = img.width; canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -118,27 +113,33 @@
                 const goldPos = [], redPos = [], giftPos = [];
                 const goldExp = [], redExp = [], giftExp = [];
                 
-                // Duyệt qua pixel, lấy những điểm sáng
-                for(let y = 0; y < canvas.height; y+=4) { // Bước nhảy 4 để giảm số hạt
+                for(let y = 0; y < canvas.height; y+=4) { 
                     for(let x = 0; x < canvas.width; x+=4) {
                         const i = (y * canvas.width + x) * 4;
                         const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-                        if(a > 128 && (r+g+b) > 100) { // Chỉ lấy điểm có màu và không quá tối
-                            const pX = (x - canvas.width/2) / 5; // Scale lại vị trí
-                            const pY = -(y - canvas.height/2) / 5; // Đảo ngược Y
-                            const pZ = (Math.random() - 0.5) * 5; // Độ dày Z nhẹ
+                        if(a > 128) { 
+                            const pX = (x - canvas.width/2) / 5; 
+                            const pY = -(y - canvas.height/2) / 5; 
+                            const pZ = (Math.random() - 0.5) * 5; 
 
                             const rad = CONFIG.explodeRadius * Math.cbrt(Math.random());
                             const phi = Math.acos(2*Math.random()-1), lam = Math.random()*Math.PI*2;
                             const eX = rad*Math.sin(phi)*Math.cos(lam), eY = rad*Math.sin(phi)*Math.sin(lam), eZ = rad*Math.cos(phi);
 
-                            if(r > 200 && g < 100) { // Màu đỏ
-                                redPos.push(pX, pY, pZ); redExp.push(eX, eY, eZ);
-                            } else if (r > 200 && g > 150) { // Màu vàng
+                            // --- CẬP NHẬT LOGIC PHÂN LOẠI MÀU ---
+                            // Ưu tiên màu cam/vàng của Nick
+                            if (r > 180 && g > 100 && b < 150) { 
                                 goldPos.push(pX, pY, pZ); goldExp.push(eX, eY, eZ);
-                            } else { // Còn lại cho vào gift
+                            } 
+                            // Ưu tiên màu đỏ đậm
+                            else if (r > g + 40 && r > b + 40) {
+                                redPos.push(pX, pY, pZ); redExp.push(eX, eY, eZ);
+                            } 
+                            // Các màu còn lại (xám, xanh...) vào nhóm Gift
+                            else { 
                                 giftPos.push(pX, pY, pZ); giftExp.push(eX, eY, eZ);
                             }
+                            // ------------------------------------
                         }
                     }
                 }
@@ -154,10 +155,9 @@
         function createParticleFromData(pos, exp, type, size) {
              const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            geo.userData = { tree: pos, explode: exp }; // 'tree' ở đây là vị trí ảnh
+            geo.userData = { tree: pos, explode: exp };
             return new THREE.Points(geo, new THREE.PointsMaterial({ size, map: textures[type], transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
         }
-        // -------------------------------------
 
         function createFlashEffect() {
             const geometry = new THREE.PlaneGeometry(15, 15); 
@@ -206,16 +206,14 @@
             if (flashMesh.material.opacity > 0) { flashMesh.material.opacity -= 0.04; flashMesh.scale.multiplyScalar(1.03); }
             lastState = state;
 
-            if(groupGold && groupRed && groupGift) { // Kiểm tra nếu hạt đã tạo xong
+            if(groupGold && groupRed && groupGift) { 
                 [groupGold, groupRed, groupGift].forEach(g => {
                     const p = g.geometry.attributes.position.array;
                     const t = g.geometry.userData[state === 'TREE' ? 'tree' : 'explode'];
                     for(let i=0; i<p.length; i++) p[i] += (t[i] - p[i]) * 0.06;
                     g.geometry.attributes.position.needsUpdate = true;
                     if(state === 'TREE') { 
-                        g.rotation.y = 0; // Không xoay khi ở dạng ảnh
-                        g.rotation.x = 0;
-                        // Thêm hiệu ứng lắc lư nhẹ cho ảnh sống động
+                        g.rotation.y = 0; g.rotation.x = 0;
                         g.position.y = Math.sin(time * 2) * 1.5;
                     }
                     else { g.rotation.y += (hRotY - g.rotation.y) * 0.05; g.rotation.x += (hRotX - g.rotation.x) * 0.05; g.position.y = 0;}
