@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Magic - Final Master Edition</title>
+    <title>Christmas Magic - Character Edition</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -36,8 +36,8 @@
 </head>
 <body>
     <div id="ui-layer">
-        <div id="status" class="badge">🎄 DỢ IU NOEL VUI VẺ 🎄</div>
-        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>Pinch:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu cây</div>
+        <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
+        <div class="guide">🖐 <b>Xòe:</b> Bung Ảnh & Xoay | 👌 <b>Pinch:</b> Phóng to Ảnh | ✊ <b>Nắm:</b> Thu về Nick & Judy</div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
     <div id="canvas-container"></div>
@@ -53,6 +53,9 @@
         const photoFiles = ['./image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg', './image6.jpeg', './image7.jpeg', './image8.jpeg', './image9.jpeg'];
         const photoTextures = [];
         photoFiles.forEach((f, i) => photoTextures[i] = loader.load(f));
+        
+        // Tải ảnh nhân vật để làm texture
+        const characterTexture = loader.load('image_0.png');
 
         function createCustomTexture(type) {
             const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
@@ -91,49 +94,78 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            groupGold = createParticleSystem('gold', CONFIG.goldCount, 1.8);
-            groupRed = createParticleSystem('red', CONFIG.redCount, 3.0);
-            groupGift = createParticleSystem('gift', CONFIG.giftCount, 2.5);
+            // Tạo hệ thống hạt dựa trên hình ảnh
+            createImageBasedParticles('image_0.png');
 
             createPhotos(); createDecorations(); 
             createFlashEffect(); 
             animate();
         }
 
-        // --- SỬA ĐỔI: Tạo đốm sáng nhỏ thay vì màn hình lớn ---
-        function createFlashEffect() {
-            // Kích thước nhỏ (15x15) đủ bao quanh khung ảnh
-            const geometry = new THREE.PlaneGeometry(15, 15); 
-            const material = new THREE.MeshBasicMaterial({
-                color: 0xFFD700, 
-                transparent: true,
-                opacity: 0, 
-                // Dùng AdditiveBlending để tạo hiệu ứng phát sáng đẹp hơn
-                blending: THREE.AdditiveBlending, 
-                depthTest: false,
-                depthWrite: false
-            });
-            flashMesh = new THREE.Mesh(geometry, material);
-            // Không cần đặt vị trí Z cố định nữa
-            scene.add(flashMesh);
+        // --- HÀM MỚI: Tạo hạt dựa trên ảnh ---
+        function createImageBasedParticles(imageUrl) {
+            const img = new Image();
+            img.src = imageUrl;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                const goldPos = [], redPos = [], giftPos = [];
+                const goldExp = [], redExp = [], giftExp = [];
+                
+                // Duyệt qua pixel, lấy những điểm sáng
+                for(let y = 0; y < canvas.height; y+=4) { // Bước nhảy 4 để giảm số hạt
+                    for(let x = 0; x < canvas.width; x+=4) {
+                        const i = (y * canvas.width + x) * 4;
+                        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+                        if(a > 128 && (r+g+b) > 100) { // Chỉ lấy điểm có màu và không quá tối
+                            const pX = (x - canvas.width/2) / 5; // Scale lại vị trí
+                            const pY = -(y - canvas.height/2) / 5; // Đảo ngược Y
+                            const pZ = (Math.random() - 0.5) * 5; // Độ dày Z nhẹ
+
+                            const rad = CONFIG.explodeRadius * Math.cbrt(Math.random());
+                            const phi = Math.acos(2*Math.random()-1), lam = Math.random()*Math.PI*2;
+                            const eX = rad*Math.sin(phi)*Math.cos(lam), eY = rad*Math.sin(phi)*Math.sin(lam), eZ = rad*Math.cos(phi);
+
+                            if(r > 200 && g < 100) { // Màu đỏ
+                                redPos.push(pX, pY, pZ); redExp.push(eX, eY, eZ);
+                            } else if (r > 200 && g > 150) { // Màu vàng
+                                goldPos.push(pX, pY, pZ); goldExp.push(eX, eY, eZ);
+                            } else { // Còn lại cho vào gift
+                                giftPos.push(pX, pY, pZ); giftExp.push(eX, eY, eZ);
+                            }
+                        }
+                    }
+                }
+
+                groupGold = createParticleFromData(goldPos, goldExp, 'gold', 1.8);
+                groupRed = createParticleFromData(redPos, redExp, 'red', 3.0);
+                groupGift = createParticleFromData(giftPos, giftExp, 'gift', 2.5);
+
+                scene.add(groupGold); scene.add(groupRed); scene.add(groupGift);
+            }
         }
 
-        function createParticleSystem(type, count, size) {
-            const pos = [], exp = [], tree = [];
-            for(let i=0; i<count; i++) {
-                const h = Math.random() * CONFIG.treeHeight;
-                const r = (1 - (h / CONFIG.treeHeight)) * CONFIG.treeBaseRadius * (type==='gold'?Math.sqrt(Math.random()):1);
-                const angle = Math.random() * Math.PI * 2;
-                tree.push(r*Math.cos(angle), h - CONFIG.treeHeight/2, r*Math.sin(angle));
-                const rad = CONFIG.explodeRadius * Math.cbrt(Math.random());
-                const phi = Math.acos(2*Math.random()-1), lam = Math.random()*Math.PI*2;
-                exp.push(rad*Math.sin(phi)*Math.cos(lam), rad*Math.sin(phi)*Math.sin(lam), rad*Math.cos(phi));
-                pos.push(tree[i*3], tree[i*3+1], tree[i*3+2]);
-            }
-            const geo = new THREE.BufferGeometry();
+        function createParticleFromData(pos, exp, type, size) {
+             const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            geo.userData = { tree, explode: exp };
+            geo.userData = { tree: pos, explode: exp }; // 'tree' ở đây là vị trí ảnh
             return new THREE.Points(geo, new THREE.PointsMaterial({ size, map: textures[type], transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+        }
+        // -------------------------------------
+
+        function createFlashEffect() {
+            const geometry = new THREE.PlaneGeometry(15, 15); 
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xFFD700, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false
+            });
+            flashMesh = new THREE.Mesh(geometry, material);
+            scene.add(flashMesh);
         }
 
         function createPhotos() {
@@ -152,13 +184,12 @@
         function createDecorations() {
             const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d'); ctx.font = 'bold italic 90px serif'; ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
-            ctx.fillText("BI AND HÚN", 512, 130);
+            ctx.fillText("MERRY CHRISTMAS", 512, 130);
             const title = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, blending: THREE.AdditiveBlending }));
             title.position.y = 50; scene.add(title);
 
             starMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshBasicMaterial({ map: textures.gold, transparent: true, blending: THREE.AdditiveBlending }));
             starMesh.position.y = CONFIG.treeHeight/2 + 2; scene.add(starMesh);
-            scene.add(groupGold); scene.add(groupRed); scene.add(groupGift);
         }
 
         function animate() {
@@ -167,33 +198,29 @@
             const hRotY = (handX - 0.5) * Math.PI * 2;
             const hRotX = (handY - 0.5) * Math.PI * 2;
 
-            // --- SỬA ĐỔI: Xử lý hiệu ứng flash điểm ---
             if (state === 'PHOTO' && lastState !== 'PHOTO') {
-                // Lấy vị trí của ảnh đang chọn
                 const targetPhoto = photoMeshes[selectedIndex];
-                // Đặt đốm sáng ngay tại vị trí đó
                 flashMesh.position.copy(targetPhoto.position);
-                // Dịch lên trước một chút để không bị ảnh che
-                flashMesh.position.z += 2; 
-                flashMesh.scale.set(1,1,1); // Reset kích thước
-                flashMesh.material.opacity = 0.7; // Bắt đầu sáng nhẹ (0.7)
+                flashMesh.position.z += 2; flashMesh.scale.set(1,1,1); flashMesh.material.opacity = 0.7; 
             }
-            
-            if (flashMesh.material.opacity > 0) {
-                flashMesh.material.opacity -= 0.04; // Mờ dần
-                flashMesh.scale.multiplyScalar(1.03); // Phóng to nhẹ khi mờ
-            }
+            if (flashMesh.material.opacity > 0) { flashMesh.material.opacity -= 0.04; flashMesh.scale.multiplyScalar(1.03); }
             lastState = state;
-            // ----------------------------------------
 
-            [groupGold, groupRed, groupGift].forEach(g => {
-                const p = g.geometry.attributes.position.array;
-                const t = g.geometry.userData[state === 'TREE' ? 'tree' : 'explode'];
-                for(let i=0; i<p.length; i++) p[i] += (t[i] - p[i]) * 0.06;
-                g.geometry.attributes.position.needsUpdate = true;
-                if(state === 'TREE') { g.rotation.y += 0.003; g.rotation.x *= 0.9; }
-                else { g.rotation.y += (hRotY - g.rotation.y) * 0.05; g.rotation.x += (hRotX - g.rotation.x) * 0.05; }
-            });
+            if(groupGold && groupRed && groupGift) { // Kiểm tra nếu hạt đã tạo xong
+                [groupGold, groupRed, groupGift].forEach(g => {
+                    const p = g.geometry.attributes.position.array;
+                    const t = g.geometry.userData[state === 'TREE' ? 'tree' : 'explode'];
+                    for(let i=0; i<p.length; i++) p[i] += (t[i] - p[i]) * 0.06;
+                    g.geometry.attributes.position.needsUpdate = true;
+                    if(state === 'TREE') { 
+                        g.rotation.y = 0; // Không xoay khi ở dạng ảnh
+                        g.rotation.x = 0;
+                        // Thêm hiệu ứng lắc lư nhẹ cho ảnh sống động
+                        g.position.y = Math.sin(time * 2) * 1.5;
+                    }
+                    else { g.rotation.y += (hRotY - g.rotation.y) * 0.05; g.rotation.x += (hRotX - g.rotation.x) * 0.05; g.position.y = 0;}
+                });
+            }
 
             if (state === 'EXPLODE') {
                 starMesh.visible = false;
@@ -201,7 +228,7 @@
                 let maxZ = -999;
                 photoMeshes.forEach((m, i) => {
                     m.visible = true;
-                    const a = groupGold.rotation.y + i * step;
+                    const a = (groupGold ? groupGold.rotation.y : 0) + i * step;
                     m.position.set(Math.sin(a)*CONFIG.photoOrbitRadius, Math.sin(time+i)*5 + (hRotX*10), Math.cos(a)*CONFIG.photoOrbitRadius);
                     m.lookAt(camera.position);
                     if (m.position.z > maxZ) { maxZ = m.position.z; selectedIndex = i; }
@@ -210,10 +237,7 @@
             } else if (state === 'PHOTO') {
                 photoMeshes.forEach((m, i) => {
                     if (i === selectedIndex) { 
-                        // Hiệu ứng zoom chậm
-                        m.position.lerp(new THREE.Vector3(0,0,60), 0.035); 
-                        m.scale.lerp(new THREE.Vector3(6,6,6), 0.035); 
-                        m.lookAt(camera.position); 
+                        m.position.lerp(new THREE.Vector3(0,0,60), 0.035); m.scale.lerp(new THREE.Vector3(6,6,6), 0.035); m.lookAt(camera.position); 
                     }
                     else { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); }
                 });
@@ -244,7 +268,6 @@
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
                     handX = lm[9].x; handY = lm[9].y;
-                    
                     const tips = [8,12,16,20];
                     const wrist = lm[0];
                     let openDist = 0;
@@ -253,14 +276,14 @@
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
                     if (avgDist < 0.26) { 
-                        state = 'TREE'; statusDiv.innerText = "✊ Thu Cây Thông"; statusDiv.style.color = "#FFD700";
+                        state = 'TREE'; statusDiv.innerText = "✊ Thu về Nick & Judy"; statusDiv.style.color = "#FFD700";
                     } else if (pinchDist < 0.06) {
                         state = 'PHOTO'; statusDiv.innerText = "👌 Xem Ảnh"; statusDiv.style.color = "#00FFFF";
                     } else {
                         state = 'EXPLODE'; statusDiv.innerText = "🖐 Bung 9 Ảnh & Xoay 360°"; statusDiv.style.color = "#FFA500";
                     }
                 } else {
-                    state = 'TREE'; statusDiv.innerText = "🎄 DỢ IU NOEL VUI VẺ🎄"; statusDiv.style.color = "#FFF";
+                    state = 'TREE'; statusDiv.innerText = "🎄 Giang Sinh An Lanh 🎄"; statusDiv.style.color = "#FFF";
                 }
             });
             new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
